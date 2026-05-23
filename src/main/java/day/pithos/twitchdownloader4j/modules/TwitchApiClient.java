@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 public class TwitchApiClient {
 
+    private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("/videos/(\\d+)");
+
     private final OkHttpClient httpClient;
     private final String clientId;
     private final String clientSecret;
@@ -30,10 +32,30 @@ public class TwitchApiClient {
         Request request = new Request.Builder().url(url).post(RequestBody.create(new byte[0])).build();
         try (Response response = this.httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new RuntimeException("Unexpected code " + response);
+                throw new IOException("Unexpected code " + response);
             }
             JSONObject responseJson = new JSONObject(response.body().string());
             return responseJson.getString("access_token");
+        }
+    }
+
+    public Vod getVodData(String vodUrl) throws IllegalArgumentException, IOException {
+        Matcher matcher = VIDEO_URL_PATTERN.matcher(vodUrl);
+        if (matcher.find()) {
+            String vodId = matcher.group(1);
+            String url = "https://api.twitch.tv/helix/videos?id=" + vodId;
+            Request request = new Request.Builder().url(url)
+                    .addHeader("Client-Id", this.clientId)
+                    .addHeader("Authorization", "Bearer " + this.accessToken).get().build();
+            try (Response response = this.httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+                JSONObject responseJson = new JSONObject(response.body().string());
+                return Vod.fromJsonObject(responseJson);
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid URL!");
         }
     }
 
