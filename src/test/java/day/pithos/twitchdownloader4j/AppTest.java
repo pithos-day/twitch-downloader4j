@@ -2,6 +2,7 @@ package day.pithos.twitchdownloader4j;
 
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Vod;
+import day.pithos.twitchdownloader4j.modules.CommentDownloader;
 import day.pithos.twitchdownloader4j.modules.DvrDownloader;
 import day.pithos.twitchdownloader4j.modules.TwitchApiClient;
 import junit.framework.TestCase;
@@ -29,6 +30,23 @@ public class AppTest extends TestCase {
             String dvrPath = "test/" + dvrDownloader.getDefaultFileName();
             dvrDownloader.download(dvrPath);
             System.out.println("Dvr has been successfully downloaded on \"" + dvrPath + "\"");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void testDownloadComments() {
+        twitchApiClient = getTwitchApiClient();
+        try {
+            Vod vod = twitchApiClient.getVodData(vodUrl);
+            System.out.println(vod.toString());
+
+            CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
+
+            String commentPath = "test/" + commentDownloader.getDefaultFileName();
+            commentDownloader.download(commentPath);
+            System.out.println("Comments has been successfully downloaded on \"" + commentPath + "\"");
 
         } catch (IOException e) {
             throw new RuntimeException(e);

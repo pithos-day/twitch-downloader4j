@@ -21,7 +21,7 @@ public class DvrDownloader {
     private final int end;
 
     public DvrDownloader(OkHttpClient httpClient, Vod vod, ClipRange clipRange) {
-        if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid URL!");
+        if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
         this.httpClient = httpClient;
         this.vod = vod;
         this.start = clipRange.start();
@@ -44,8 +44,9 @@ public class DvrDownloader {
 
     private String fetchM3u8() throws IOException {
         Request request = new Request.Builder().url(this.vod.getDvrUrl()).get().build();
-        Response res = execute(request);
-        return res.body().string();
+        try (Response res = execute(request)) {
+            return res.body().string();
+        }
     }
 
     private List<String> parseM3u8(String m3u8) {
