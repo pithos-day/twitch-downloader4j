@@ -24,6 +24,7 @@ import java.util.Set;
 
 public class CommentDownloader {
 
+    private Set<Comment> comments;
     private final OkHttpClient httpClient;
     private final Vod vod;
     private final int start;
@@ -37,13 +38,13 @@ public class CommentDownloader {
         this.end = clipRange.end();
     }
 
-    public void download(String path) throws IOException {
-        this.download(Path.of(path));
+    public void downloadToFile(String path) throws IOException {
+        this.downloadToFile(Path.of(path));
     }
 
-    public void download(Path path) throws IOException {
+    public void downloadToFile(Path path) throws IOException {
         JSONArray array = new JSONArray();
-        Set<Comment> comments = this.getCommentsSet();
+        Set<Comment> comments = this.fetchComments();
 
         for (Comment comment : comments) {
             array.put(JsonUtil.commentToJson(comment));
@@ -56,7 +57,12 @@ public class CommentDownloader {
         return this.vod.user().name() + "_" + this.vod.id() + "_" + this.start + "_to_" + this.end + ".json";
     }
 
-    public Set<Comment> getCommentsSet() throws IOException {
+    public Set<Comment> fetchComments() throws IOException {
+        return this.fetchComments(false);
+    }
+
+    public Set<Comment> fetchComments(boolean force) throws IOException {
+        if (!force && this.comments != null) return this.comments;
         Set<Comment> comments = new LinkedHashSet<>();
         String cursor = null;
         int lastTime = 0;

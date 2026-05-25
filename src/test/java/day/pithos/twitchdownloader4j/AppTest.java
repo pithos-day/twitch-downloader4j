@@ -28,7 +28,7 @@ public class AppTest extends TestCase {
             DvrDownloader dvrDownloader = new DvrDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
 
             String dvrPath = "test/" + dvrDownloader.getDefaultFileName();
-            dvrDownloader.download(dvrPath);
+            dvrDownloader.downloadToFile(dvrPath);
             System.out.println("Dvr has been successfully downloaded on \"" + dvrPath + "\"");
 
         } catch (IOException e) {
@@ -45,7 +45,7 @@ public class AppTest extends TestCase {
             CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
 
             String commentPath = "test/" + commentDownloader.getDefaultFileName();
-            commentDownloader.download(commentPath);
+            commentDownloader.downloadToFile(commentPath);
             System.out.println("Comments has been successfully downloaded on \"" + commentPath + "\"");
 
         } catch (IOException e) {
