@@ -38,10 +38,6 @@ public class CommentDownloader {
         this.end = clipRange.end();
     }
 
-    public void downloadToFile(String path) throws IOException {
-        this.downloadToFile(Path.of(path));
-    }
-
     public void downloadToFile(Path path) throws IOException {
         JSONArray array = new JSONArray();
         Set<Comment> comments = this.fetchComments();

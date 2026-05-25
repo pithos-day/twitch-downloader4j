@@ -11,6 +11,7 @@ import junit.framework.TestCase;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class AppTest extends TestCase {
@@ -30,7 +31,7 @@ public class AppTest extends TestCase {
 
             DvrDownloader dvrDownloader = new DvrDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
 
-            String dvrPath = "test/" + dvrDownloader.getDefaultFileName();
+            Path dvrPath = Path.of("test/" + dvrDownloader.getDefaultFileName());
             dvrDownloader.downloadToFile(dvrPath);
             System.out.println("Dvr has been successfully downloaded on \"" + dvrPath + "\"");
 
@@ -47,7 +48,7 @@ public class AppTest extends TestCase {
 
             CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
 
-            String commentPath = "test/" + commentDownloader.getDefaultFileName();
+            Path commentPath = Path.of("test/" + commentDownloader.getDefaultFileName());
             commentDownloader.downloadToFile(commentPath);
             System.out.println("Comments has been successfully downloaded on \"" + commentPath + "\"");
 
@@ -64,7 +65,7 @@ public class AppTest extends TestCase {
 
             CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
 
-            String emotesPath = "test/emote/";
+            Path emotesPath = Path.of("test/emote/");
             EmoteDownloader emoteDownloader = new EmoteDownloader(getHttpClient());
             Set<Comment> comments = commentDownloader.fetchComments();;
             emoteDownloader.downloadToFiles(comments, emotesPath);

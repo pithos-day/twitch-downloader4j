@@ -26,10 +26,6 @@ public class EmoteDownloader {
         this.httpClient = httpClient;
     }
 
-    public void downloadToFiles(Set<Comment> comments, String path) throws IOException {
-        this.downloadToFiles(comments, Path.of(path));
-    }
-
     public void downloadToFiles(Set<Comment> comments, Path directory) throws IOException {
         this.downloadToFiles(comments, directory, false);
     }
@@ -43,10 +39,6 @@ public class EmoteDownloader {
             Path dst = directory.resolve(entry.getKey() + extension);
             this.saveEmoteBytes(entry.getValue(), dst);
         }
-    }
-
-    public void downloadToFile(String emoteId, String path) throws IOException {
-        this.downloadToFile(emoteId, Path.of(path));
     }
 
     public void downloadToFile(String emoteId, Path dst) throws IOException {

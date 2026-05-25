@@ -28,10 +28,6 @@ public class DvrDownloader {
         this.end = clipRange.end();
     }
 
-    public void downloadToFile(String path) throws IOException {
-        this.downloadToFile(Path.of(path));
-    }
-
     public void downloadToFile(Path path) throws IOException {
         String m3u8 = this.fetchM3u8();
         List<String> segments = this.parseM3u8(m3u8);
