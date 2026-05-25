@@ -1,14 +1,17 @@
 package day.pithos.twitchdownloader4j;
 
 import day.pithos.twitchdownloader4j.data.ClipRange;
+import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.Vod;
 import day.pithos.twitchdownloader4j.modules.CommentDownloader;
 import day.pithos.twitchdownloader4j.modules.DvrDownloader;
+import day.pithos.twitchdownloader4j.modules.EmoteDownloader;
 import day.pithos.twitchdownloader4j.modules.TwitchApiClient;
 import junit.framework.TestCase;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class AppTest extends TestCase {
 
@@ -47,6 +50,26 @@ public class AppTest extends TestCase {
             String commentPath = "test/" + commentDownloader.getDefaultFileName();
             commentDownloader.downloadToFile(commentPath);
             System.out.println("Comments has been successfully downloaded on \"" + commentPath + "\"");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void testDownloadEmotes() {
+        twitchApiClient = getTwitchApiClient();
+        try {
+            Vod vod = twitchApiClient.getVodData(vodUrl);
+            System.out.println(vod.toString());
+
+            CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
+
+            String emotesPath = "test/emote/";
+            EmoteDownloader emoteDownloader = new EmoteDownloader(getHttpClient());
+            Set<Comment> comments = commentDownloader.fetchComments();;
+            emoteDownloader.downloadToFiles(comments, emotesPath);
+
+            System.out.println("Emotes has been successfully downloaded on \"" + emotesPath + "\"");
 
         } catch (IOException e) {
             throw new RuntimeException(e);

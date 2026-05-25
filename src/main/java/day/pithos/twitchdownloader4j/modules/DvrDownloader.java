@@ -81,14 +81,13 @@ public class DvrDownloader {
         }
     }
 
-    private Path downloadM3u8(List<String> segments, Path path) throws IOException {
+    private void downloadM3u8(List<String> segments, Path path) throws IOException {
         OutputStream os = Files.newOutputStream(path);
         String baseUrl = vod.getDvrUrl().substring(0, vod.getDvrUrl().lastIndexOf('/')) + "/";
 
         for (String seg : segments) {
             downloadSegment(os, baseUrl + seg);
         }
-        return path;
     }
 
     private void downloadSegment(OutputStream out, String url) throws IOException {
