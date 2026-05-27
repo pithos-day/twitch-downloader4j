@@ -24,6 +24,9 @@ import java.util.Set;
 
 public class CommentDownloader {
 
+    private static final String GQL_CLIENT_ID = "kd1unb4b3q4t58fwlpcbzcbnm76a8fp";
+    private static final String COMMENTS_QUERY_HASH = "b70a3591ff0f4e0313d126c6a1502d79a1c02baebb288227c582044aa76adf6a";
+
     private Set<Comment> comments;
     private final OkHttpClient httpClient;
     private final Vod vod;
@@ -75,7 +78,7 @@ public class CommentDownloader {
 
     private JSONObject fetchRawPage(String cursor) throws IOException {
         Request request = new Request.Builder().url("https://gql.twitch.tv/gql")
-                .addHeader("Client-Id", "kd1unb4b3q4t58fwlpcbzcbnm76a8fp")
+                .addHeader("Client-Id", GQL_CLIENT_ID)
                 .post(this.createChatGqlRequestBody(cursor)).build();
 
         try (Response res = httpClient.newCall(request).execute()) {
@@ -154,7 +157,7 @@ public class CommentDownloader {
                 .put("extensions", new JSONObject()
                         .put("persistedQuery", new JSONObject()
                                 .put("version", 1)
-                                .put("sha256Hash", "b70a3591ff0f4e0313d126c6a1502d79a1c02baebb288227c582044aa76adf6a")));
+                                .put("sha256Hash", COMMENTS_QUERY_HASH)));
         JSONArray queryArray = new JSONArray().put(initialQuery);
         return RequestBody.create(queryArray.toString(), MediaType.get("application/json"));
     }
