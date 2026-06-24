@@ -25,9 +25,11 @@ public class JsonUtil {
 
     public static JSONObject userToJson(User user) {
         JSONObject obj = new JSONObject();
-        obj.put("id", user.id());
-        obj.put("name", user.name());
-        obj.put("displayName", user.displayName());
+        if (user != null) {
+            obj.put("id", user.id());
+            obj.put("name", user.name());
+            obj.put("displayName", user.displayName());
+        }
         return obj;
     }
 
