@@ -29,6 +29,8 @@ public class JsonUtil {
             obj.put("id", user.id());
             obj.put("name", user.name());
             obj.put("displayName", user.displayName());
+        } else {
+            obj.put("id", "null");
         }
         return obj;
     }
