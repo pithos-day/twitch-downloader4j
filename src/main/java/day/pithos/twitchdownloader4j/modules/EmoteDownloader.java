@@ -17,21 +17,14 @@ import java.util.Set;
 
 public class EmoteDownloader {
 
-    private Map<String, byte[]> emoteBytesMap;
-
     private final OkHttpClient httpClient;
 
     public EmoteDownloader(OkHttpClient httpClient) {
-        this.emoteBytesMap = new HashMap<>();
         this.httpClient = httpClient;
     }
 
     public void downloadToFiles(Set<Comment> comments, Path directory) throws IOException {
-        this.downloadToFiles(comments, directory, false);
-    }
-
-    public void downloadToFiles(Set<Comment> comments, Path directory, boolean force) throws IOException {
-        Map<String, byte[]> emoteBytesMap = this.fetchEmoteBytesMap(comments, force);
+        Map<String, byte[]> emoteBytesMap = this.fetchEmoteBytesMap(comments);
         Files.createDirectories(directory);
 
         for (Map.Entry<String, byte[]> entry : emoteBytesMap.entrySet()) {
@@ -42,11 +35,7 @@ public class EmoteDownloader {
     }
 
     public void downloadToFile(String emoteId, Path dst) throws IOException {
-        this.downloadToFile(emoteId, dst, false);
-    }
-
-    public void downloadToFile(String emoteId, Path dst, boolean force) throws IOException {
-        byte[] emoteBytes = this.fetchEmoteBytes(emoteId, force);
+        byte[] emoteBytes = this.fetchEmoteBytes(emoteId);
         this.saveEmoteBytes(emoteBytes, dst);
     }
 
@@ -55,27 +44,18 @@ public class EmoteDownloader {
     }
 
     public Map<String, byte[]> fetchEmoteBytesMap(Set<Comment> comments) throws IOException {
-        return this.fetchEmoteBytesMap(comments, false);
-    }
-
-    public Map<String, byte[]> fetchEmoteBytesMap(Set<Comment> comments, boolean force) throws IOException {
         Map<String, byte[]> emoteBytesMap = new HashMap<>();
 
         Set<String> emoteIds = getEmoteIds(comments);
 
         for (String emoteId : emoteIds) {
-            emoteBytesMap.put(emoteId, fetchEmoteBytes(emoteId, force));
+            emoteBytesMap.put(emoteId, fetchEmoteBytes(emoteId));
         }
 
         return emoteBytesMap;
     }
 
     public byte[] fetchEmoteBytes(String emoteId) throws IOException {
-        return this.fetchEmoteBytes(emoteId, false);
-    }
-
-    public byte[] fetchEmoteBytes(String emoteId, boolean force) throws IOException {
-        if (!force && this.emoteBytesMap.containsKey(emoteId)) return emoteBytesMap.get(emoteId);
 
         Request request = new Request.Builder()
                 .url("https://static-cdn.jtvnw.net/emoticons/v2/" + emoteId + "/default/dark/2.0")
@@ -86,7 +66,6 @@ public class EmoteDownloader {
                 throw new IOException("Failed! " + res);
             }
             byte[] emoteBytes = res.body().bytes();
-            this.emoteBytesMap.put(emoteId, emoteBytes);
             return emoteBytes;
         } catch (IOException e) {
             throw new IOException("Failed to fetch Emote", e);
