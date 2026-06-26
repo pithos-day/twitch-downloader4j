@@ -24,22 +24,34 @@ public class EmoteDownloader {
     }
 
     public void downloadToFiles(Set<Comment> comments, Path directory) throws IOException {
+        downloadToFiles(comments, directory, false);
+    }
+
+    public void downloadToFiles(Set<Comment> comments, Path directory, boolean overwrite) throws IOException {
         Map<String, byte[]> emoteBytesMap = this.fetchEmoteBytesMap(comments);
         Files.createDirectories(directory);
 
         for (Map.Entry<String, byte[]> entry : emoteBytesMap.entrySet()) {
             String extension = isGif(entry.getValue()) ? ".gif" : ".png";
             Path dst = directory.resolve(entry.getKey() + extension);
-            this.saveEmoteBytes(entry.getValue(), dst);
+            this.saveEmoteBytes(entry.getValue(), dst, overwrite);
         }
     }
 
     public void downloadToFile(String emoteId, Path dst) throws IOException {
-        byte[] emoteBytes = this.fetchEmoteBytes(emoteId);
-        this.saveEmoteBytes(emoteBytes, dst);
+        downloadToFile(emoteId, dst, false);
     }
 
-    private void saveEmoteBytes(byte[] imageBytes, Path dst) throws IOException {
+    public void downloadToFile(String emoteId, Path dst, boolean overwrite) throws IOException {
+        byte[] emoteBytes = this.fetchEmoteBytes(emoteId);
+        this.saveEmoteBytes(emoteBytes, dst, overwrite);
+    }
+
+    private void saveEmoteBytes(byte[] imageBytes, Path dst, boolean overwrite) throws IOException {
+        if (!overwrite && Files.exists(dst)) {
+            return;
+        }
+
         Files.write(dst, imageBytes);
     }
 
