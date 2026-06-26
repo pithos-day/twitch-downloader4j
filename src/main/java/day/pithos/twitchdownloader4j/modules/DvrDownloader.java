@@ -2,23 +2,31 @@ package day.pithos.twitchdownloader4j.modules;
 
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Vod;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DvrDownloader {
+
+    private static final String GQL_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
+    private static final String PLAYBACK_QUERY_HASH = "ed230aa1e33e07eebb8928504583da78a5173989fadfb1ac94be06a04f3cdbe9";
 
     private final OkHttpClient httpClient;
     private final Vod vod;
     private final int start;
     private final int end;
+    private String dvrUrl;
 
     public DvrDownloader(OkHttpClient httpClient, Vod vod, ClipRange clipRange) {
         if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
@@ -39,7 +47,7 @@ public class DvrDownloader {
     }
 
     private String fetchM3u8() throws IOException {
-        Request request = new Request.Builder().url(this.vod.getDvrUrl()).get().build();
+        Request request = new Request.Builder().url(this.getDvrUrl()).get().build();
         try (Response res = execute(request)) {
             return res.body().string();
         }
@@ -79,11 +87,14 @@ public class DvrDownloader {
 
     private void downloadM3u8(List<String> segments, Path path) throws IOException {
         OutputStream os = Files.newOutputStream(path);
-        String baseUrl = vod.getDvrUrl().substring(0, vod.getDvrUrl().lastIndexOf('/')) + "/";
+        String dvrUrl = this.getDvrUrl();
+        String baseUrl = dvrUrl.substring(0, dvrUrl.lastIndexOf('/')) + "/";
 
         for (String seg : segments) {
             downloadSegment(os, baseUrl + seg);
         }
+
+        os.close();
     }
 
     private void downloadSegment(OutputStream out, String url) throws IOException {
@@ -98,8 +109,97 @@ public class DvrDownloader {
         Response res = httpClient.newCall(request).execute();
 
         if (!res.isSuccessful()) {
-            throw new RuntimeException("Failed! " + res);
+            throw new IOException("Failed! " + res);
         }
         return res;
+    }
+
+    private String getDvrUrl() throws IOException {
+        return this.getDvrUrl(false);
+    }
+
+    private String getDvrUrl(boolean force) throws IOException {
+        if (!force && dvrUrl != null) return this.dvrUrl;
+
+        Pattern pattern = Pattern.compile("cf_vods/([^/]+)/([^/]+)/");
+        Matcher matcher = pattern.matcher(this.vod.thumbnailUrl());
+        if (matcher.find()) {
+            String server = matcher.group(1);
+            String directory = matcher.group(2);
+            return this.dvrUrl = "https://" + server + ".cloudfront.net/" + directory + "/chunked/index-dvr.m3u8";
+        } else {
+            return this.dvrUrl = this.getDvrUrlWithRequest();
+        }
+    }
+
+    private String getDvrUrlWithRequest() throws IOException {
+        PlaybackAccessToken playbackAccessToken = getPlaybackAccessToken();
+        String url = "https://usher.ttvnw.net/vod/v2/" + this.vod.id() + ".m3u8" +
+                "?supported_codecs=av1,h264" +
+                "&transcode_mode=cbr_v1" +
+                "&sig=" + playbackAccessToken.signature() +
+                "&token=" + playbackAccessToken.value() +
+                "&allow_source=true";
+
+        Request request = new Request.Builder().url(url).get().build();
+
+        try (Response response = this.execute(request)) {
+            String m3u8 = response.body().string();
+            return extractUrlByResolution(m3u8, "chunked");
+        }
+    }
+
+    private static String extractUrlByResolution(String m3u8, String target) {
+        String[] lines = m3u8.split("\n");
+
+        for (String line : lines) {
+            if (line.startsWith("http") && line.contains(target)) {
+                return line.trim();
+            }
+        }
+        return null;
+    }
+
+    private record PlaybackAccessToken(String signature, String value) {}
+
+    private PlaybackAccessToken getPlaybackAccessToken() throws IOException {
+        Request request = new Request.Builder().url("https://gql.twitch.tv/gql")
+                .addHeader("Client-Id", GQL_CLIENT_ID)
+                .post(this.createVodGqlRequestBody()).build();
+
+        String signature;
+        String value;
+
+
+        try (Response res = this.httpClient.newCall(request).execute()) {
+            if (!res.isSuccessful()) {
+                throw new IOException("Failed! " + res);
+            }
+
+            JSONObject token = new JSONArray(res.body().string())
+                    .getJSONObject(0).getJSONObject("data").getJSONObject("videoPlaybackAccessToken");
+            signature = token.getString("signature");
+            value = token.getString("value");
+        }
+
+        return new PlaybackAccessToken(signature, value);
+    }
+
+    private RequestBody createVodGqlRequestBody() {
+        JSONObject initialQuery = new JSONObject()
+                .put("operationName", "PlaybackAccessToken")
+                .put("variables", new JSONObject()
+                        .put("isLive", false)
+                        .put("isVod", true)
+                        .put("login", "")
+                        .put("vodID", this.vod.id())
+                        .put("platform", "web")
+                        .put("playerType", "site"))
+                .put("extensions", new JSONObject()
+                        .put("persistedQuery", new JSONObject()
+                                .put("version", 1)
+                                .put("sha256Hash", PLAYBACK_QUERY_HASH)));
+        JSONArray queryArray = new JSONArray().put(initialQuery);
+        return RequestBody.create(queryArray.toString(), MediaType.get("application/json"));
     }
 }

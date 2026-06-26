@@ -4,8 +4,6 @@ import day.pithos.twitchdownloader4j.util.DurationUtil;
 import org.json.JSONObject;
 
 import java.time.Instant;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public record Vod(String id, String streamId, User user,
                   String title, String description, Instant created, Instant published,
@@ -22,18 +20,4 @@ public record Vod(String id, String streamId, User user,
                 data.getString("viewable"), data.getInt("view_count"), data.getString("language"), data.getString("type"),
                 DurationUtil.parseToSeconds(data.getString("duration")));
     }
-
-    public String getDvrUrl() {
-        String regex = "cf_vods/([^/]+)/([^/]+)/";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(this.thumbnailUrl);
-        if (matcher.find()) {
-            String server = matcher.group(1);
-            String directory = matcher.group(2);
-            return "https://" + server + ".cloudfront.net/" + directory + "/chunked/index-dvr.m3u8";
-        } else {
-            throw new IllegalArgumentException("Invalid URL!");
-        }
-    }
-
 }
