@@ -73,7 +73,7 @@ public class CommentDownloader {
             lastTime = page.lastTime();
             cursor = page.nextCursor();
         }
-        return comments;
+        return this.comments = comments;
     }
 
     private JSONObject fetchRawPage(String cursor) throws IOException {
