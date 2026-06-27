@@ -48,6 +48,10 @@ public class DvrDownloader extends BaseTwitchDownloader {
         for (int i = 0; i < lines.length; i++) {
             if (!lines[i].startsWith("#EXTINF:")) continue;
 
+            if (i + 1 >= lines.length) {
+                throw new IllegalArgumentException("M3U8 format error: #EXTINF without segment URL");
+            }
+
             double duration = parseDuration(lines[i]);
             double segStart = current;
             double segEnd = current + duration;
