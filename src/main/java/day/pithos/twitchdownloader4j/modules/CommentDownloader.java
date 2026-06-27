@@ -27,6 +27,8 @@ import java.util.Set;
 
 public class CommentDownloader extends BaseTwitchDownloader {
 
+    private static final int COMMENT_TIME_BUFFER = 10;
+
     private Set<Comment> comments;
 
     public CommentDownloader(TwitchApiClient apiClient, Vod vod, ClipRange clipRange) {
@@ -59,12 +61,14 @@ public class CommentDownloader extends BaseTwitchDownloader {
         String cursor = null;
         int lastTime = 0;
 
-        while (lastTime <= end + 10 && cursor != null || lastTime == 0) {
+        boolean isFirstPage = true;
+        while (isFirstPage || (cursor != null && lastTime <= end + COMMENT_TIME_BUFFER)) {
             Page page = parsePage(fetchRawPage(cursor));
             comments.addAll(page.comments());
 
             lastTime = page.lastTime();
             cursor = page.nextCursor();
+            isFirstPage = false;
         }
         return this.comments = comments;
     }
