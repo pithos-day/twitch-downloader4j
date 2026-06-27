@@ -90,6 +90,10 @@ public class CommentDownloader extends BaseTwitchDownloader {
             comments.add(parseComment(edges.getJSONObject(i)));
         }
 
+        if (edges.length() == 0) {
+            return new Page(comments, -1, null);
+        }
+
         JSONObject lastEdge = edges.getJSONObject(edges.length() - 1);
         int lastTime = lastEdge.getJSONObject("node").getInt("contentOffsetSeconds");
         String cursor = json.getJSONObject("pageInfo").getBoolean("hasNextPage") ? lastEdge.getString("cursor") : null;
