@@ -73,15 +73,14 @@ public class DvrDownloader extends BaseTwitchDownloader {
     }
 
     private void downloadM3u8(List<String> segments, Path path) throws IOException {
-        OutputStream os = Files.newOutputStream(path);
         String dvrUrl = this.getDvrUrl();
         String baseUrl = dvrUrl.substring(0, dvrUrl.lastIndexOf('/')) + "/";
 
-        for (String seg : segments) {
-            downloadSegment(os, baseUrl + seg);
+        try (OutputStream os = Files.newOutputStream(path)) {
+            for (String seg : segments) {
+                downloadSegment(os, baseUrl + seg);
+            }
         }
-
-        os.close();
     }
 
     private void downloadSegment(OutputStream out, String url) throws IOException {
