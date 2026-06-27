@@ -25,20 +25,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CommentDownloader {
+public class CommentDownloader extends BaseTwitchDownloader {
 
     private Set<Comment> comments;
-    private final TwitchApiClient apiClient;
-    private final Vod vod;
-    private final int start;
-    private final int end;
 
     public CommentDownloader(TwitchApiClient apiClient, Vod vod, ClipRange clipRange) {
-        if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
-        this.apiClient = apiClient;
-        this.vod = vod;
-        this.start = clipRange.start();
-        this.end = clipRange.end();
+        super(apiClient, vod, clipRange);
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return "json";
     }
 
     public void downloadToFile(Path path) throws IOException {
@@ -50,10 +47,6 @@ public class CommentDownloader {
         }
 
         Files.writeString(path, array.toString(2));
-    }
-
-    public String getDefaultFileName() {
-        return this.vod.user().name() + "_" + this.vod.id() + "_" + this.start + "_to_" + this.end + ".json";
     }
 
     public Set<Comment> fetchComments() throws IOException {

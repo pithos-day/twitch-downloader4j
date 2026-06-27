@@ -16,30 +16,23 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DvrDownloader {
+public class DvrDownloader extends BaseTwitchDownloader {
 
-    private final TwitchApiClient apiClient;
-    private final Vod vod;
-    private final int start;
-    private final int end;
     private String dvrUrl;
 
     public DvrDownloader(TwitchApiClient apiClient, Vod vod, ClipRange clipRange) {
-        if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
-        this.apiClient = apiClient;
-        this.vod = vod;
-        this.start = clipRange.start();
-        this.end = clipRange.end();
+        super(apiClient, vod, clipRange);
+    }
+
+    @Override
+    protected String getFileExtension() {
+        return "ts";
     }
 
     public void downloadToFile(Path path) throws IOException {
         String m3u8 = this.fetchM3u8();
         List<String> segments = this.parseM3u8(m3u8);
         this.downloadM3u8(segments, path);
-    }
-
-    public String getDefaultFileName() {
-        return this.vod.user().name() + "_" + this.vod.id() + "_" + this.start + "_to_" + this.end + ".ts";
     }
 
     private String fetchM3u8() throws IOException {
