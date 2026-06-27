@@ -121,7 +121,7 @@ public class DvrDownloader extends BaseTwitchDownloader {
         return extractUrlByResolution(m3u8, "chunked");
     }
 
-    private static String extractUrlByResolution(String m3u8, String target) {
+    private static String extractUrlByResolution(String m3u8, String target) throws IOException {
         String[] lines = m3u8.split("\n");
 
         for (String line : lines) {
@@ -129,7 +129,7 @@ public class DvrDownloader extends BaseTwitchDownloader {
                 return line.trim();
             }
         }
-        return null;
+        throw new IOException("No URL found for resolution: " + target);
     }
 
     private record PlaybackAccessToken(String signature, String value) {}
