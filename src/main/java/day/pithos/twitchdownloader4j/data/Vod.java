@@ -3,6 +3,7 @@ package day.pithos.twitchdownloader4j.data;
 import day.pithos.twitchdownloader4j.util.DurationUtil;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.time.Instant;
 
 public record Vod(String id, String streamId, User user,
@@ -10,7 +11,10 @@ public record Vod(String id, String streamId, User user,
                   String url, String thumbnailUrl, String viewable, int viewCount,
                   String language, String type, int duration) {
 
-    public static Vod fromJsonObject(JSONObject jsonObject) {
+    public static Vod fromJsonObject(JSONObject jsonObject) throws IOException {
+        if (!jsonObject.has("data") || jsonObject.getJSONArray("data").isEmpty()) {
+            throw new IOException("No VOD data found in response");
+        }
         JSONObject data = jsonObject.getJSONArray("data").getJSONObject(0);
         return new Vod(data.getString("id"), data.getString("stream_id"),
                 new User(data.getString("user_id"), data.getString("user_login"), data.getString("user_name")),
