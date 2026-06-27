@@ -1,5 +1,6 @@
 package day.pithos.twitchdownloader4j.modules;
 
+import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Vod;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,7 +29,7 @@ public class TwitchApiClient {
     }
 
     private String getAccessToken() throws IOException {
-        String url = "https://id.twitch.tv/oauth2/token?client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&grant_type=client_credentials";
+        String url = TwitchConfig.OAUTH_TOKEN_URL + "?client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&grant_type=client_credentials";
         Request request = new Request.Builder().url(url).post(RequestBody.create(new byte[0])).build();
         try (Response response = this.httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
@@ -43,7 +44,7 @@ public class TwitchApiClient {
         Matcher matcher = VIDEO_URL_PATTERN.matcher(vodUrl);
         if (matcher.find()) {
             String vodId = matcher.group(1);
-            String url = "https://api.twitch.tv/helix/videos?id=" + vodId;
+            String url = TwitchConfig.HELIX_VIDEOS_URL + "?id=" + vodId;
             Request request = new Request.Builder().url(url)
                     .addHeader("Client-Id", this.clientId)
                     .addHeader("Authorization", "Bearer " + this.accessToken).get().build();

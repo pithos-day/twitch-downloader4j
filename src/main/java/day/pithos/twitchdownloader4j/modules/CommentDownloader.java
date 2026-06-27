@@ -1,5 +1,6 @@
 package day.pithos.twitchdownloader4j.modules;
 
+import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.User;
@@ -23,9 +24,6 @@ import java.util.List;
 import java.util.Set;
 
 public class CommentDownloader {
-
-    private static final String GQL_CLIENT_ID = "kd1unb4b3q4t58fwlpcbzcbnm76a8fp";
-    private static final String COMMENTS_QUERY_HASH = "b70a3591ff0f4e0313d126c6a1502d79a1c02baebb288227c582044aa76adf6a";
 
     private Set<Comment> comments;
     private final OkHttpClient httpClient;
@@ -77,8 +75,8 @@ public class CommentDownloader {
     }
 
     private JSONObject fetchRawPage(String cursor) throws IOException {
-        Request request = new Request.Builder().url("https://gql.twitch.tv/gql")
-                .addHeader("Client-Id", GQL_CLIENT_ID)
+        Request request = new Request.Builder().url(TwitchConfig.GQL_URL)
+                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_COMMENTS)
                 .post(this.createChatGqlRequestBody(cursor)).build();
 
         try (Response res = httpClient.newCall(request).execute()) {
@@ -157,9 +155,9 @@ public class CommentDownloader {
                 .put("extensions", new JSONObject()
                         .put("persistedQuery", new JSONObject()
                                 .put("version", 1)
-                                .put("sha256Hash", COMMENTS_QUERY_HASH)));
+                                .put("sha256Hash", TwitchConfig.COMMENTS_QUERY_HASH)));
         JSONArray queryArray = new JSONArray().put(initialQuery);
-        return RequestBody.create(queryArray.toString(), MediaType.get("application/json"));
+        return RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
     }
 
     private record Page(List<Comment> comments, int lastTime, String nextCursor) {}

@@ -1,5 +1,6 @@
 package day.pithos.twitchdownloader4j.modules;
 
+import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.comment.EmoteFragment;
 import day.pithos.twitchdownloader4j.data.comment.Fragment;
@@ -70,7 +71,7 @@ public class EmoteDownloader {
     public byte[] fetchEmoteBytes(String emoteId) throws IOException {
 
         Request request = new Request.Builder()
-                .url("https://static-cdn.jtvnw.net/emoticons/v2/" + emoteId + "/default/dark/2.0")
+                .url(TwitchConfig.EMOTE_CDN_URL + emoteId + "/default/dark/2.0")
                 .build();
 
         try (Response res = this.httpClient.newCall(request).execute()) {

@@ -1,5 +1,6 @@
 package day.pithos.twitchdownloader4j.modules;
 
+import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Vod;
 import okhttp3.*;
@@ -16,9 +17,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DvrDownloader {
-
-    private static final String GQL_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
-    private static final String PLAYBACK_QUERY_HASH = "ed230aa1e33e07eebb8928504583da78a5173989fadfb1ac94be06a04f3cdbe9";
 
     private final OkHttpClient httpClient;
     private final Vod vod;
@@ -132,7 +130,7 @@ public class DvrDownloader {
 
     private String getDvrUrlWithRequest() throws IOException {
         PlaybackAccessToken playbackAccessToken = getPlaybackAccessToken();
-        String url = "https://usher.ttvnw.net/vod/v2/" + this.vod.id() + ".m3u8" +
+        String url = TwitchConfig.USHER_VOD_URL + this.vod.id() + ".m3u8" +
                 "?supported_codecs=av1,h264" +
                 "&transcode_mode=cbr_v1" +
                 "&sig=" + playbackAccessToken.signature() +
@@ -161,8 +159,8 @@ public class DvrDownloader {
     private record PlaybackAccessToken(String signature, String value) {}
 
     private PlaybackAccessToken getPlaybackAccessToken() throws IOException {
-        Request request = new Request.Builder().url("https://gql.twitch.tv/gql")
-                .addHeader("Client-Id", GQL_CLIENT_ID)
+        Request request = new Request.Builder().url(TwitchConfig.GQL_URL)
+                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_PLAYBACK)
                 .post(this.createVodGqlRequestBody()).build();
 
         String signature;
@@ -196,8 +194,8 @@ public class DvrDownloader {
                 .put("extensions", new JSONObject()
                         .put("persistedQuery", new JSONObject()
                                 .put("version", 1)
-                                .put("sha256Hash", PLAYBACK_QUERY_HASH)));
+                                .put("sha256Hash", TwitchConfig.PLAYBACK_QUERY_HASH)));
         JSONArray queryArray = new JSONArray().put(initialQuery);
-        return RequestBody.create(queryArray.toString(), MediaType.get("application/json"));
+        return RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
     }
 }
