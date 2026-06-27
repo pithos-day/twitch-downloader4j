@@ -29,7 +29,7 @@ public class AppTest extends TestCase {
             Vod vod = twitchApiClient.getVodData(vodUrl);
             System.out.println(vod.toString());
 
-            DvrDownloader dvrDownloader = new DvrDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
+            DvrDownloader dvrDownloader = new DvrDownloader(getTwitchApiClient(), vod, ClipRange.withDuration(0, 5));
 
             Path dvrPath = Path.of("test/" + dvrDownloader.getDefaultFileName());
             dvrDownloader.downloadToFile(dvrPath);
@@ -46,7 +46,7 @@ public class AppTest extends TestCase {
             Vod vod = twitchApiClient.getVodData(vodUrl);
             System.out.println(vod.toString());
 
-            CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
+            CommentDownloader commentDownloader = new CommentDownloader(getTwitchApiClient(), vod, ClipRange.withDuration(0, 5));
 
             Path commentPath = Path.of("test/" + commentDownloader.getDefaultFileName());
             commentDownloader.downloadToFile(commentPath);
@@ -63,10 +63,10 @@ public class AppTest extends TestCase {
             Vod vod = twitchApiClient.getVodData(vodUrl);
             System.out.println(vod.toString());
 
-            CommentDownloader commentDownloader = new CommentDownloader(getHttpClient(), vod, ClipRange.withDuration(0, 5));
+            CommentDownloader commentDownloader = new CommentDownloader(getTwitchApiClient(), vod, ClipRange.withDuration(0, 5));
 
             Path emotesPath = Path.of("test/emote/");
-            EmoteDownloader emoteDownloader = new EmoteDownloader(getHttpClient());
+            EmoteDownloader emoteDownloader = new EmoteDownloader(getTwitchApiClient());
             Set<Comment> comments = commentDownloader.fetchComments();;
             emoteDownloader.downloadToFiles(comments, emotesPath);
 

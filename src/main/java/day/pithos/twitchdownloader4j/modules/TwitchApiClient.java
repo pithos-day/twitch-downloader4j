@@ -28,16 +28,42 @@ public class TwitchApiClient {
         this.accessToken = this.getAccessToken();
     }
 
+    // --- 汎用 HTTP メソッド ---
+
+    public Response execute(Request request) throws IOException {
+        Response res = httpClient.newCall(request).execute();
+        if (!res.isSuccessful()) {
+            res.close();
+            throw new IOException("HTTP request failed: " + res);
+        }
+        return res;
+    }
+
+    public String executeAsString(Request request) throws IOException {
+        try (Response res = execute(request)) {
+            String body = res.body().string();
+            if (body == null) {
+                throw new IOException("Response body is null for: " + request.url());
+            }
+            return body;
+        }
+    }
+
+    public byte[] executeAsBytes(Request request) throws IOException {
+        try (Response res = execute(request)) {
+            byte[] body = res.body().bytes();
+            if (body == null) {
+                throw new IOException("Response body is null for: " + request.url());
+            }
+            return body;
+        }
+    }
+
     private String getAccessToken() throws IOException {
         String url = TwitchConfig.OAUTH_TOKEN_URL + "?client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&grant_type=client_credentials";
         Request request = new Request.Builder().url(url).post(RequestBody.create(new byte[0])).build();
-        try (Response response = this.httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
-            }
-            JSONObject responseJson = new JSONObject(response.body().string());
-            return responseJson.getString("access_token");
-        }
+        String body = executeAsString(request);
+        return new JSONObject(body).getString("access_token");
     }
 
     public Vod getVodData(String vodUrl) throws IllegalArgumentException, IOException {
@@ -48,13 +74,8 @@ public class TwitchApiClient {
             Request request = new Request.Builder().url(url)
                     .addHeader("Client-Id", this.clientId)
                     .addHeader("Authorization", "Bearer " + this.accessToken).get().build();
-            try (Response response = this.httpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
-                }
-                JSONObject responseJson = new JSONObject(response.body().string());
-                return Vod.fromJsonObject(responseJson);
-            }
+            String body = executeAsString(request);
+            return Vod.fromJsonObject(new JSONObject(body));
         } else {
             throw new IllegalArgumentException("Invalid URL!");
         }

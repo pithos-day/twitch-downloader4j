@@ -4,9 +4,7 @@ import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.comment.EmoteFragment;
 import day.pithos.twitchdownloader4j.data.comment.Fragment;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,10 +16,10 @@ import java.util.Set;
 
 public class EmoteDownloader {
 
-    private final OkHttpClient httpClient;
+    private final TwitchApiClient apiClient;
 
-    public EmoteDownloader(OkHttpClient httpClient) {
-        this.httpClient = httpClient;
+    public EmoteDownloader(TwitchApiClient apiClient) {
+        this.apiClient = apiClient;
     }
 
     public void downloadToFiles(Set<Comment> comments, Path directory) throws IOException {
@@ -69,19 +67,14 @@ public class EmoteDownloader {
     }
 
     public byte[] fetchEmoteBytes(String emoteId) throws IOException {
-
         Request request = new Request.Builder()
                 .url(TwitchConfig.EMOTE_CDN_URL + emoteId + "/default/dark/2.0")
                 .build();
 
-        try (Response res = this.httpClient.newCall(request).execute()) {
-            if (!res.isSuccessful()) {
-                throw new IOException("Failed! " + res);
-            }
-            byte[] emoteBytes = res.body().bytes();
-            return emoteBytes;
+        try {
+            return apiClient.executeAsBytes(request);
         } catch (IOException e) {
-            throw new IOException("Failed to fetch Emote", e);
+            throw new IOException("Failed to fetch Emote: " + emoteId, e);
         }
     }
 

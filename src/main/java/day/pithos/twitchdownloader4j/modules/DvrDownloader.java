@@ -18,15 +18,15 @@ import java.util.regex.Pattern;
 
 public class DvrDownloader {
 
-    private final OkHttpClient httpClient;
+    private final TwitchApiClient apiClient;
     private final Vod vod;
     private final int start;
     private final int end;
     private String dvrUrl;
 
-    public DvrDownloader(OkHttpClient httpClient, Vod vod, ClipRange clipRange) {
+    public DvrDownloader(TwitchApiClient apiClient, Vod vod, ClipRange clipRange) {
         if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
-        this.httpClient = httpClient;
+        this.apiClient = apiClient;
         this.vod = vod;
         this.start = clipRange.start();
         this.end = clipRange.end();
@@ -44,9 +44,7 @@ public class DvrDownloader {
 
     private String fetchM3u8() throws IOException {
         Request request = new Request.Builder().url(this.getDvrUrl()).get().build();
-        try (Response res = execute(request)) {
-            return res.body().string();
-        }
+        return apiClient.executeAsString(request);
     }
 
     private List<String> parseM3u8(String m3u8) {
@@ -95,19 +93,8 @@ public class DvrDownloader {
 
     private void downloadSegment(OutputStream out, String url) throws IOException {
         Request req = new Request.Builder().url(url).build();
-
-        try (Response res = execute(req)) {
-            out.write(res.body().bytes());
-        }
-    }
-
-    private Response execute(Request request) throws IOException {
-        Response res = httpClient.newCall(request).execute();
-
-        if (!res.isSuccessful()) {
-            throw new IOException("Failed! " + res);
-        }
-        return res;
+        byte[] data = apiClient.executeAsBytes(req);
+        out.write(data);
     }
 
     private String getDvrUrl() throws IOException {
@@ -138,11 +125,8 @@ public class DvrDownloader {
                 "&allow_source=true";
 
         Request request = new Request.Builder().url(url).get().build();
-
-        try (Response response = this.execute(request)) {
-            String m3u8 = response.body().string();
-            return extractUrlByResolution(m3u8, "chunked");
-        }
+        String m3u8 = apiClient.executeAsString(request);
+        return extractUrlByResolution(m3u8, "chunked");
     }
 
     private static String extractUrlByResolution(String m3u8, String target) {
@@ -163,20 +147,11 @@ public class DvrDownloader {
                 .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_PLAYBACK)
                 .post(this.createVodGqlRequestBody()).build();
 
-        String signature;
-        String value;
-
-
-        try (Response res = this.httpClient.newCall(request).execute()) {
-            if (!res.isSuccessful()) {
-                throw new IOException("Failed! " + res);
-            }
-
-            JSONObject token = new JSONArray(res.body().string())
-                    .getJSONObject(0).getJSONObject("data").getJSONObject("videoPlaybackAccessToken");
-            signature = token.getString("signature");
-            value = token.getString("value");
-        }
+        String body = apiClient.executeAsString(request);
+        JSONObject token = new JSONArray(body)
+                .getJSONObject(0).getJSONObject("data").getJSONObject("videoPlaybackAccessToken");
+        String signature = token.getString("signature");
+        String value = token.getString("value");
 
         return new PlaybackAccessToken(signature, value);
     }

@@ -9,7 +9,9 @@ import day.pithos.twitchdownloader4j.data.comment.EmoteFragment;
 import day.pithos.twitchdownloader4j.data.comment.Fragment;
 import day.pithos.twitchdownloader4j.data.comment.TextFragment;
 import day.pithos.twitchdownloader4j.util.JsonUtil;
-import okhttp3.*;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -26,14 +28,14 @@ import java.util.Set;
 public class CommentDownloader {
 
     private Set<Comment> comments;
-    private final OkHttpClient httpClient;
+    private final TwitchApiClient apiClient;
     private final Vod vod;
     private final int start;
     private final int end;
 
-    public CommentDownloader(OkHttpClient httpClient, Vod vod, ClipRange clipRange) {
+    public CommentDownloader(TwitchApiClient apiClient, Vod vod, ClipRange clipRange) {
         if (!clipRange.isValidFor(vod)) throw new IllegalArgumentException("Invalid Clip Range!");
-        this.httpClient = httpClient;
+        this.apiClient = apiClient;
         this.vod = vod;
         this.start = clipRange.start();
         this.end = clipRange.end();
@@ -79,17 +81,12 @@ public class CommentDownloader {
                 .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_COMMENTS)
                 .post(this.createChatGqlRequestBody(cursor)).build();
 
-        try (Response res = httpClient.newCall(request).execute()) {
-            if (!res.isSuccessful()) {
-                throw new IOException("Failed! " + res);
-            }
-
-            return new JSONArray(res.body().string())
-                    .getJSONObject(0)
-                    .getJSONObject("data")
-                    .getJSONObject("video")
-                    .getJSONObject("comments");
-        }
+        String body = apiClient.executeAsString(request);
+        return new JSONArray(body)
+                .getJSONObject(0)
+                .getJSONObject("data")
+                .getJSONObject("video")
+                .getJSONObject("comments");
     }
 
     private Page parsePage(JSONObject json) {
