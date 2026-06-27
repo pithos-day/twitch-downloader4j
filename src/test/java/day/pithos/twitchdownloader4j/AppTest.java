@@ -80,7 +80,7 @@ public class AppTest extends TestCase {
     private TwitchApiClient getTwitchApiClient() {
         if (this.twitchApiClient == null) {
             try {
-                this.twitchApiClient = new TwitchApiClient(getHttpClient(), clientId, clientSecret);
+                this.twitchApiClient = TwitchApiClient.create(getHttpClient(), clientId, clientSecret);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

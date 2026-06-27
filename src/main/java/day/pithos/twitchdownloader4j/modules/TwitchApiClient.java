@@ -21,11 +21,34 @@ public class TwitchApiClient {
     private final String clientSecret;
     private final String accessToken;
 
-    public TwitchApiClient(OkHttpClient httpClient, String clientId, String clientSecret) throws IOException {
+    private TwitchApiClient(OkHttpClient httpClient, String clientId, String clientSecret, String accessToken) {
         this.httpClient = httpClient;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.accessToken = this.getAccessToken();
+        this.accessToken = accessToken;
+    }
+
+    public static TwitchApiClient create(OkHttpClient httpClient, String clientId, String clientSecret) throws IOException {
+        String url = TwitchConfig.OAUTH_TOKEN_URL + "?client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=client_credentials";
+        Request request = new Request.Builder().url(url).post(RequestBody.create(new byte[0])).build();
+        String body = executeStatic(httpClient, request);
+        String accessToken = new JSONObject(body).getString("access_token");
+        return new TwitchApiClient(httpClient, clientId, clientSecret, accessToken);
+    }
+
+    private static String executeStatic(OkHttpClient httpClient, Request request) throws IOException {
+        Response res = httpClient.newCall(request).execute();
+        if (!res.isSuccessful()) {
+            res.close();
+            throw new IOException("HTTP request failed: " + res);
+        }
+        try (res) {
+            String body = res.body().string();
+            if (body == null) {
+                throw new IOException("Response body is null for: " + request.url());
+            }
+            return body;
+        }
     }
 
     // --- 汎用 HTTP メソッド ---
@@ -57,13 +80,6 @@ public class TwitchApiClient {
             }
             return body;
         }
-    }
-
-    private String getAccessToken() throws IOException {
-        String url = TwitchConfig.OAUTH_TOKEN_URL + "?client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&grant_type=client_credentials";
-        Request request = new Request.Builder().url(url).post(RequestBody.create(new byte[0])).build();
-        String body = executeAsString(request);
-        return new JSONObject(body).getString("access_token");
     }
 
     public Vod getVodData(String vodUrl) throws IllegalArgumentException, IOException {
