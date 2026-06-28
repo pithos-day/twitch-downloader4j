@@ -2,8 +2,6 @@ package day.pithos.twitchdownloader4j.modules;
 
 import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Comment;
-import day.pithos.twitchdownloader4j.data.comment.EmoteFragment;
-import day.pithos.twitchdownloader4j.data.comment.Fragment;
 import day.pithos.twitchdownloader4j.util.ImageUtil;
 import okhttp3.Request;
 
@@ -81,15 +79,9 @@ public class EmoteDownloader {
 
     private static Set<String> getEmoteIds(Set<Comment> comments) {
         Set<String> emoteIds = new HashSet<>();
-
         for (Comment comment : comments) {
-            for (Fragment fragment : comment.fragments()) {
-                if (fragment instanceof EmoteFragment e) {
-                    emoteIds.add(e.emoteId());
-                }
-            }
+            emoteIds.addAll(comment.emoteIds());
         }
-
         return emoteIds;
     }
 
