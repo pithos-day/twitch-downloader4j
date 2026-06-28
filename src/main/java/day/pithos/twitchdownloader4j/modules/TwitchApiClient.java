@@ -2,11 +2,7 @@ package day.pithos.twitchdownloader4j.modules;
 
 import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Vod;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

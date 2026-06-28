@@ -8,21 +8,21 @@ TwitchのアーカイブをダウンロードするためのJavaライブラリ�
 
 ```java
 OkHttpClient httpClient = new OkHttpClient();
-TwitchApiClient client = new TwitchApiClient(httpClient, clientId, clientSecret);
+TwitchApiClient client = TwitchApiClient.create(httpClient, clientId, clientSecret);
 Vod vod = client.getVodData("https://www.twitch.tv/videos/123456789");
 ```
 
 ### Download DVR
 
 ```java
-DvrDownloader dvrDownloader = new DvrDownloader(httpClient, vod, ClipRange.withDuration(0, 60));
+DvrDownloader dvrDownloader = new DvrDownloader(client, vod, ClipRange.withDuration(0, 60));
 dvrDownloader.downloadToFile(Path.of("output/" + dvrDownloader.getDefaultFileName()));
 ```
 
 ### Download comments
 
 ```java
-CommentDownloader commentDownloader = new CommentDownloader(httpClient, vod, ClipRange.withDuration(0, 60));
+CommentDownloader commentDownloader = new CommentDownloader(client, vod, ClipRange.withDuration(0, 60));
 commentDownloader.downloadToFile(Path.of("output/" + commentDownloader.getDefaultFileName()));
 ```
 
@@ -30,6 +30,6 @@ commentDownloader.downloadToFile(Path.of("output/" + commentDownloader.getDefaul
 
 ```java
 Set<Comment> comments = commentDownloader.fetchComments();
-EmoteDownloader emoteDownloader = new EmoteDownloader(httpClient);
+EmoteDownloader emoteDownloader = new EmoteDownloader(client);
 emoteDownloader.downloadToFiles(comments, Path.of("output/emotes/"));
 ```
