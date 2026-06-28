@@ -2,10 +2,12 @@ package day.pithos.twitchdownloader4j.modules;
 
 import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Vod;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -81,6 +83,34 @@ public class TwitchApiClient {
             return body;
         }
     }
+
+    // --- GQL リクエスト構築 ---
+
+    public Request createCommentGqlRequest(String vodId, int startOffset, String cursor) {
+        JSONObject variables = new JSONObject()
+                .put("videoID", vodId);
+        if (cursor == null) {
+            variables.put("contentOffsetSeconds", startOffset);
+        } else {
+            variables.put("cursor", cursor);
+        }
+
+        JSONObject initialQuery = new JSONObject()
+                .put("operationName", "VideoCommentsByOffsetOrCursor")
+                .put("variables", variables)
+                .put("extensions", new JSONObject()
+                        .put("persistedQuery", new JSONObject()
+                                .put("version", 1)
+                                .put("sha256Hash", TwitchConfig.COMMENTS_QUERY_HASH)));
+        JSONArray queryArray = new JSONArray().put(initialQuery);
+        RequestBody requestBody = RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
+
+        return new Request.Builder().url(TwitchConfig.GQL_URL)
+                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_COMMENTS)
+                .post(requestBody).build();
+    }
+
+    // --- Helix API ---
 
     public Vod getVodData(String vodUrl) throws IllegalArgumentException, IOException {
         Matcher matcher = VIDEO_URL_PATTERN.matcher(vodUrl);

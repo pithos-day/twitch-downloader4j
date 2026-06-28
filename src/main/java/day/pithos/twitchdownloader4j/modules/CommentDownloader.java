@@ -1,14 +1,11 @@
 package day.pithos.twitchdownloader4j.modules;
 
-import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.Vod;
 import day.pithos.twitchdownloader4j.parse.CommentParser;
 import day.pithos.twitchdownloader4j.util.JsonUtil;
-import okhttp3.MediaType;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -68,29 +65,12 @@ public class CommentDownloader extends BaseTwitchDownloader {
     }
 
     private JSONObject fetchRawPage(String cursor) throws IOException {
-        Request request = new Request.Builder().url(TwitchConfig.GQL_URL)
-                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_COMMENTS)
-                .post(createChatGqlRequestBody(cursor)).build();
-
+        Request request = apiClient.createCommentGqlRequest(this.vod.id(), start, cursor);
         String body = apiClient.executeAsString(request);
         return new JSONArray(body)
                 .getJSONObject(0)
                 .getJSONObject("data")
                 .getJSONObject("video")
                 .getJSONObject("comments");
-    }
-
-    private RequestBody createChatGqlRequestBody(String cursor) {
-        JSONObject initialQuery = new JSONObject()
-                .put("operationName", "VideoCommentsByOffsetOrCursor")
-                .put("variables", new JSONObject()
-                        .put("videoID", this.vod.id())
-                        .put(cursor == null ? "contentOffsetSeconds" : "cursor", cursor == null ? start : cursor))
-                .put("extensions", new JSONObject()
-                        .put("persistedQuery", new JSONObject()
-                                .put("version", 1)
-                                .put("sha256Hash", TwitchConfig.COMMENTS_QUERY_HASH)));
-        JSONArray queryArray = new JSONArray().put(initialQuery);
-        return RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
     }
 }
