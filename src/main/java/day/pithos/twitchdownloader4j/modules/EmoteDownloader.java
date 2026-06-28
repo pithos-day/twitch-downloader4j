@@ -4,6 +4,7 @@ import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Comment;
 import day.pithos.twitchdownloader4j.data.comment.EmoteFragment;
 import day.pithos.twitchdownloader4j.data.comment.Fragment;
+import day.pithos.twitchdownloader4j.util.ImageUtil;
 import okhttp3.Request;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ public class EmoteDownloader {
         Files.createDirectories(directory);
 
         for (Map.Entry<String, byte[]> entry : emoteBytesMap.entrySet()) {
-            String extension = isGif(entry.getValue()) ? ".gif" : ".png";
+            String extension = ImageUtil.isGif(entry.getValue()) ? ".gif" : ".png";
             Path dst = directory.resolve(entry.getKey() + extension);
             this.saveEmoteBytes(entry.getValue(), dst, overwrite);
         }
@@ -90,23 +91,6 @@ public class EmoteDownloader {
         }
 
         return emoteIds;
-    }
-
-    public static boolean isGif(byte[] bytes) {
-        return startsWith(bytes, new byte[]{0x47, 0x49, 0x46, 0x38});
-    }
-
-    private static boolean startsWith(byte[] data, byte[] signature) {
-        if (data.length < signature.length) {
-            return false;
-        }
-
-        for (int i = 0; i < signature.length; i++) {
-            if (data[i] != signature[i]) {
-                return false;
-            }
-        }
-        return true;
     }
 
 }
