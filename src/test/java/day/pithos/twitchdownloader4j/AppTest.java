@@ -8,6 +8,8 @@ import day.pithos.twitchdownloader4j.modules.DvrDownloader;
 import day.pithos.twitchdownloader4j.modules.EmoteDownloader;
 import day.pithos.twitchdownloader4j.modules.TwitchApiClient;
 import okhttp3.OkHttpClient;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,9 +22,23 @@ public class AppTest {
 
     private OkHttpClient httpClient;
     private TwitchApiClient twitchApiClient;
-    private final String clientId = System.getenv("TWITCH_CLIENT_ID");
-    private final String clientSecret = System.getenv("TWITCH_CLIENT_SECRET");
-    private final String vodUrl = System.getenv("TWITCH_VOD_URL");
+    private String clientId;
+    private String clientSecret;
+    private String vodUrl;
+
+    @BeforeEach
+    public void setUp() {
+        clientId = System.getenv("TWITCH_CLIENT_ID");
+        clientSecret = System.getenv("TWITCH_CLIENT_SECRET");
+        vodUrl = System.getenv("TWITCH_VOD_URL");
+
+        Assumptions.assumeTrue(clientId != null && !clientId.isBlank(),
+                "TWITCH_CLIENT_ID is not set. Skipping integration tests.");
+        Assumptions.assumeTrue(clientSecret != null && !clientSecret.isBlank(),
+                "TWITCH_CLIENT_SECRET is not set. Skipping integration tests.");
+        Assumptions.assumeTrue(vodUrl != null && !vodUrl.isBlank(),
+                "TWITCH_VOD_URL is not set. Skipping integration tests.");
+    }
 
     @Test
     public void testDownloadDvr() {
