@@ -3,10 +3,6 @@ package day.pithos.twitchdownloader4j.modules;
 import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.Vod;
 import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.MediaType;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -36,12 +32,12 @@ public class VodUrlResolver {
     }
 
     private String resolveM3u8UrlViaApi() throws IOException {
-        PlaybackAccessToken playbackAccessToken = getPlaybackAccessToken();
+        TwitchApiClient.PlaybackAccessToken token = apiClient.fetchPlaybackAccessToken(this.vod.id());
         String url = TwitchConfig.USHER_VOD_URL + this.vod.id() + ".m3u8" +
                 "?supported_codecs=av1,h264" +
                 "&transcode_mode=cbr_v1" +
-                "&sig=" + playbackAccessToken.signature() +
-                "&token=" + playbackAccessToken.value() +
+                "&sig=" + token.signature() +
+                "&token=" + token.value() +
                 "&allow_source=true";
 
         Request request = new Request.Builder().url(url).get().build();
@@ -58,39 +54,5 @@ public class VodUrlResolver {
             }
         }
         throw new IOException("No URL found for resolution: " + target);
-    }
-
-    record PlaybackAccessToken(String signature, String value) {}
-
-    private PlaybackAccessToken getPlaybackAccessToken() throws IOException {
-        Request request = new Request.Builder().url(TwitchConfig.GQL_URL)
-                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_PLAYBACK)
-                .post(createVodGqlRequestBody()).build();
-
-        String body = apiClient.executeAsString(request);
-        JSONObject token = new JSONArray(body)
-                .getJSONObject(0).getJSONObject("data").getJSONObject("videoPlaybackAccessToken");
-        String signature = token.getString("signature");
-        String value = token.getString("value");
-
-        return new PlaybackAccessToken(signature, value);
-    }
-
-    private RequestBody createVodGqlRequestBody() {
-        JSONObject initialQuery = new JSONObject()
-                .put("operationName", "PlaybackAccessToken")
-                .put("variables", new JSONObject()
-                        .put("isLive", false)
-                        .put("isVod", true)
-                        .put("login", "")
-                        .put("vodID", this.vod.id())
-                        .put("platform", "web")
-                        .put("playerType", "site"))
-                .put("extensions", new JSONObject()
-                        .put("persistedQuery", new JSONObject()
-                                .put("version", 1)
-                                .put("sha256Hash", TwitchConfig.PLAYBACK_QUERY_HASH)));
-        JSONArray queryArray = new JSONArray().put(initialQuery);
-        return RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
     }
 }

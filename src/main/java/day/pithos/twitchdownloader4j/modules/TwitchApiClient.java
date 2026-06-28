@@ -110,6 +110,35 @@ public class TwitchApiClient {
                 .post(requestBody).build();
     }
 
+    public record PlaybackAccessToken(String signature, String value) {}
+
+    public PlaybackAccessToken fetchPlaybackAccessToken(String vodId) throws IOException {
+        JSONObject initialQuery = new JSONObject()
+                .put("operationName", "PlaybackAccessToken")
+                .put("variables", new JSONObject()
+                        .put("isLive", false)
+                        .put("isVod", true)
+                        .put("login", "")
+                        .put("vodID", vodId)
+                        .put("platform", "web")
+                        .put("playerType", "site"))
+                .put("extensions", new JSONObject()
+                        .put("persistedQuery", new JSONObject()
+                                .put("version", 1)
+                                .put("sha256Hash", TwitchConfig.PLAYBACK_QUERY_HASH)));
+        JSONArray queryArray = new JSONArray().put(initialQuery);
+        RequestBody requestBody = RequestBody.create(queryArray.toString(), MediaType.get(TwitchConfig.APPLICATION_JSON));
+
+        Request request = new Request.Builder().url(TwitchConfig.GQL_URL)
+                .addHeader("Client-Id", TwitchConfig.GQL_CLIENT_ID_PLAYBACK)
+                .post(requestBody).build();
+
+        String body = executeAsString(request);
+        JSONObject token = new JSONArray(body)
+                .getJSONObject(0).getJSONObject("data").getJSONObject("videoPlaybackAccessToken");
+        return new PlaybackAccessToken(token.getString("signature"), token.getString("value"));
+    }
+
     // --- Helix API ---
 
     public Vod getVodData(String vodUrl) throws IllegalArgumentException, IOException {
