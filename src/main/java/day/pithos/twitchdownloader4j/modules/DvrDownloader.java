@@ -3,6 +3,7 @@ package day.pithos.twitchdownloader4j.modules;
 import day.pithos.twitchdownloader4j.config.TwitchConfig;
 import day.pithos.twitchdownloader4j.data.ClipRange;
 import day.pithos.twitchdownloader4j.data.Vod;
+import day.pithos.twitchdownloader4j.parse.M3u8Parser;
 import okhttp3.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,7 +12,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,49 +31,13 @@ public class DvrDownloader extends BaseTwitchDownloader {
 
     public void downloadToFile(Path path) throws IOException {
         String m3u8 = this.fetchM3u8();
-        List<String> segments = this.parseM3u8(m3u8);
+        List<String> segments = M3u8Parser.parseSegments(m3u8, start, end);
         this.downloadM3u8(segments, path);
     }
 
     private String fetchM3u8() throws IOException {
         Request request = new Request.Builder().url(this.getDvrUrl()).get().build();
         return apiClient.executeAsString(request);
-    }
-
-    private List<String> parseM3u8(String m3u8) {
-        String[] lines = m3u8.split("\n");
-        double current = 0;
-        List<String> result = new ArrayList<>();
-
-        for (int i = 0; i < lines.length; i++) {
-            if (!lines[i].startsWith("#EXTINF:")) continue;
-
-            if (i + 1 >= lines.length) {
-                throw new IllegalArgumentException("M3U8 format error: #EXTINF without segment URL");
-            }
-
-            double duration = parseDuration(lines[i]);
-            double segStart = current;
-            double segEnd = current + duration;
-
-            if (segEnd <= start) {
-                current = segEnd;
-                continue;
-            }
-
-            if (end <= segStart) break;
-            result.add(lines[i + 1]);
-            current = segEnd;
-        }
-        return result;
-    }
-
-    private double parseDuration(String line) {
-        try {
-            return Double.parseDouble(line.replace("#EXTINF:", "").replace(",", ""));
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Invalid EXTINF: " + line, e);
-        }
     }
 
     private void downloadM3u8(List<String> segments, Path path) throws IOException {
