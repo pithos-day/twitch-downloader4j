@@ -45,7 +45,15 @@ public class DvrDownloader extends BaseTwitchDownloader {
 
         try (OutputStream os = Files.newOutputStream(path)) {
             for (String seg : segments) {
-                downloadSegment(os, baseUrl + seg);
+                try {
+                    downloadSegment(os, baseUrl + seg);
+                } catch (IOException e) {
+                    if (seg.contains("unmuted")) {
+                        downloadSegment(os, baseUrl + seg.replace("unmuted", "muted"));
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
     }
