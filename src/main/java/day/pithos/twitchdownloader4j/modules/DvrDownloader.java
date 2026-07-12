@@ -45,17 +45,33 @@ public class DvrDownloader extends BaseTwitchDownloader {
 
         try (OutputStream os = Files.newOutputStream(path)) {
             for (String seg : segments) {
-                try {
-                    downloadSegment(os, baseUrl + seg);
-                } catch (IOException e) {
-                    if (seg.contains("unmuted")) {
-                        downloadSegment(os, baseUrl + seg.replace("unmuted", "muted"));
-                    } else {
-                        throw e;
-                    }
-                }
+                downloadSegmentWithFallback(os, baseUrl, seg);
             }
         }
+    }
+
+    private void downloadSegmentWithFallback(OutputStream os, String baseUrl, String seg) throws IOException {
+        if (!seg.contains("unmuted")) {
+            downloadSegment(os, baseUrl + seg);
+            return;
+        }
+
+        List<String> candidates = List.of(
+                seg,
+                seg.replace("-unmuted", ""),
+                seg.replace("unmuted", "muted")
+        );
+
+        IOException error = null;
+        for (String candidate : candidates) {
+            try {
+                downloadSegment(os, baseUrl + candidate);
+                return;
+            } catch (IOException e) {
+                error = e;
+            }
+        }
+        throw error;
     }
 
     private void downloadSegment(OutputStream out, String url) throws IOException {
